@@ -1,0 +1,30 @@
+{
+  "name": "ia-node",
+  "version": "1.0.0",
+  "description": "Projeto seguindo curso da Rocketseat para integração do ChatGPT com uma API Node.js",
+  "keywords": [
+    "api",
+    "nodejs",
+    "ai",
+    "chatgpt",
+    "openai"
+  ],
+  "license": "ISC",
+  "author": "S0lturne",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.7.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "openai": "^6.3.0"
+  }
+}
