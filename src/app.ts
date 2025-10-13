@@ -1,5 +1,6 @@
 import express from 'express';
 import OpenAI from "openai";
+import zod from 'zod';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -23,12 +24,11 @@ app.post("/generate/response", async (req, res) => {
   
   client.responses.create({
     model: "gpt-4o-mini",
-    input: "Escreva uma mensagem curta explicando a diferença entre SOLID e DDD.",
+    input: req.body.message,
     store: true,
     max_output_tokens: 100,
   })
-  .then((result) => {
-    console.log("Resposta: ", result.output_text);
+  .then(result => {
     res.json({ message: result.output_text });
   });
 
@@ -40,14 +40,31 @@ app.post("/generate/completion", async (req, res) => {
   client.chat.completions.create({
     model: 'gpt-4o-mini',
     max_completion_tokens: 100,
+
+    // Garante que a estrutura virá em um JSON válido
+    // ...porém não garante que esteja formatado da forma que queremos, para isso usamos o 'z.object'
+    // É importante saber também que é OBRIGATÓRIO utilizar o termo "JSON" em um dos prompts caso utilize o "response_format: { type: 'json_object' }"
+    response_format: { type: 'json_object' },
+
     messages: [
-      { role: 'developer', content: 'Responda de forma técnica, sucinta e bem direto ao ponto.' },
-      { role: 'user', content: 'Escreva uma mensagem curta explicando a diferença entre SOLID e DDD.' }
+      { role: 'developer', content: 'Liste cinco produtos que atendam à necessidade do usuário. Responda em JSON no formato { produtos: string[] }' },
+      { role: 'user', content: req.body.message }
     ],
   })
-  .then((completion) => {
-    console.log("Resposta: ", completion.choices[0].message.content);
-    res.json({ message: completion.choices[0].message.content });
+  .then(completion => {
+    const output = JSON.parse(completion.choices[0].message.content ?? '');
+
+    const schema = zod.object({
+      produtos: zod.array(zod.string()),
+    });
+
+    const result = schema.safeParse(output);
+    if (!result.success) {
+      res.status(500).end();
+      return;
+    }
+
+    res.json(output);
   });
 
 });
