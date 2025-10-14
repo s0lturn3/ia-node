@@ -9,7 +9,7 @@
     "chatgpt",
     "openai"
   ],
-  "license": "ISC",
+  "license": "MIT",
   "author": "S0lturne",
   "type": "module",
   "main": "src/index.ts",
