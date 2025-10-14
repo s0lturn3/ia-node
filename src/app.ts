@@ -40,12 +40,7 @@ app.post("/generate/completion", async (req, res) => {
   client.chat.completions.create({
     model: 'gpt-4o-mini',
     max_completion_tokens: 100,
-
-    // Garante que a estrutura virá em um JSON válido
-    // ...porém não garante que esteja formatado da forma que queremos, para isso usamos o 'z.object'
-    // É importante saber também que é OBRIGATÓRIO utilizar o termo "JSON" em um dos prompts caso utilize o "response_format: { type: 'json_object' }"
     response_format: { type: 'json_object' },
-
     messages: [
       { role: 'developer', content: 'Liste cinco produtos que atendam à necessidade do usuário. Responda em JSON no formato { produtos: string[] }' },
       { role: 'user', content: req.body.message }
