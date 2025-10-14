@@ -105,7 +105,7 @@ No início do arquivo para inicializar o client corretamente.
 
 ---
 
-## 7. 
+## 7. `max_output_tokens`
 
 ```js
 client.responses.create({
