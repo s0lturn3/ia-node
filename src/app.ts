@@ -10,8 +10,7 @@ dotenv.config();
 const app = express();
 
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  project: 'ia-node'
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 app.use(express.json());
