@@ -1,19 +1,12 @@
-import express from 'express';
-import OpenAI from "openai";
-import zod from 'zod';
-
 import dotenv from 'dotenv';
 dotenv.config();
+
+import express from 'express';
+import { generateCompletion, generateResponse } from './openai';
 
 
 // INICIALIZAÇÕES E CONFIGURAÇÕES
 const app = express();
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  project: 'ia-node'
-});
-
 app.use(express.json());
 
 
@@ -22,47 +15,29 @@ app.use(express.json());
 /** Gera uma resposta utilizando a estrutura 'responses.create' */
 app.post("/generate/response", async (req, res) => {
   
-  client.responses.create({
-    model: "gpt-4o-mini",
-    input: req.body.message,
-    store: true,
-    max_output_tokens: 100,
-  })
-  .then(result => {
-    res.json({ message: result.output_text });
-  });
+  try {
+    const response = await generateResponse(req.body.message);
+    res.json(response);
+  }
+  catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 
 });
 
 /** Gera uma resposta utilizando a estrutura 'completions.create' */
 app.post("/generate/completion", async (req, res) => {
 
-  client.chat.completions.create({
-    model: 'gpt-4o-mini',
-    max_completion_tokens: 100,
-    response_format: { type: 'json_object' },
-    messages: [
-      { role: 'developer', content: 'Liste cinco produtos que atendam à necessidade do usuário. Responda em JSON no formato { produtos: string[] }' },
-      { role: 'user', content: req.body.message }
-    ],
-  })
-  .then(completion => {
-    const output = JSON.parse(completion.choices[0].message.content ?? '');
-
-    const schema = zod.object({
-      produtos: zod.array(zod.string()),
-    });
-
-    const result = schema.safeParse(output);
-    if (!result.success) {
-      res.status(500).end();
-      return;
-    }
-
-    res.json(output);
-  });
+  try {
+    const response = await generateCompletion(req.body.message);
+    res.json(response);
+  }
+  catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 
 });
-
 
 export default app;
