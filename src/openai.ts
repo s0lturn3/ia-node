@@ -3,7 +3,7 @@ dotenv.config();
 
 import express from 'express';
 import OpenAI from "openai";
-import { ChatCompletionTool } from 'openai/resources';
+import { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources';
 import zod from 'zod';
 import { getProdutosEmEstoque, getProdutosEmFalta } from './database';
 
@@ -65,47 +65,71 @@ export const generateResponse = async (message: string) => {
 
 }
 
-/** Gera uma resposta utilizando a estrutura 'completions.create' */
-export const generateCompletion = async (message: string) => {
+// ==================================================
+const generate = async (messages: ChatCompletionMessageParam[]) => {
 
-  client.chat.completions.create({
+  const completion = await client.chat.completions.create({
     model: 'gpt-4o-mini',
     max_completion_tokens: 100,
     response_format: { type: 'json_object' },
     tools: tools,
-    messages: [
-      { role: 'developer', content: 'Liste cinco produtos que atendam à necessidade do usuário. Responda em JSON no formato { produtos: string[] }' },
-      { role: 'user', content: message }
-    ],
-  })
-  .then(completion => {
-    const output = JSON.parse(completion.choices[0].message.content ?? '');
-
-    const schema = zod.object({
-      produtos: zod.array(zod.string()),
-    });
-
-    const parsed = schema.safeParse(output);
-    if (!parsed.success) throw new Error('A resposta foi recebida em um formato inválido.');
+    messages: messages
+  });
 
 
-    const { tool_calls } = completion.choices[0].message;
-    if (tool_calls) {
-      const [ tool_call ] = tool_calls;
+  // Trecho de recursão
+  const { tool_calls } = completion.choices[0].message;
+  if (tool_calls) {
+    const [ tool_call ] = tool_calls;
 
-      const toolsMap = {
-        produtos_em_estoque: getProdutosEmEstoque,
-        produtos_em_falta: getProdutosEmFalta,
-      }
-
-      const functionToCall = toolsMap[tool_call.function.name];
-      if (!functionToCall) throw new Error('Função não encontrada.');
-
-      const result = functionToCall(tool_call.function.parsed_arguments);
+    const toolsMap = {
+      produtos_em_estoque: getProdutosEmEstoque,
+      produtos_em_falta: getProdutosEmFalta,
     }
 
+    // TODO: Comentado temporariamente. Entender o porquê isso dá erro no código
+    // const functionToCall = toolsMap[tool_call.function.name];
+    // if (!functionToCall) throw new Error('Função não encontrada.');
 
-    return output;
+    // const result = functionToCall(tool_call.function.parsed_arguments);
+
+    // messages.push(completion.choices[0].message);
+    // messages.push({
+    //   role: 'function',
+    //   tool_call_id: tool_call.id,
+    //   content: result.toString()
+    // });
+
+    // // Segunda chamada com a resposta da função já chamada e é a resposta que retorna para cima
+    // const completionUpdated = await generate(messages);
+    // return completionUpdated;
+  }
+
+
+  return completion;
+
+}
+
+/** Gera uma resposta utilizando a estrutura 'completions.create' */
+export const generateCompletion = async (message: string) => {
+  const messages: ChatCompletionMessageParam[] = [
+    { role: 'developer', content: 'Liste cinco produtos que atendam à necessidade do usuário. Responda em JSON no formato { produtos: string[] }' },
+    { role: 'user', content: message }
+  ];
+
+  // Chamada inicial com a mensagem inicial
+  const completion = await generate(messages);
+
+  
+  const output = JSON.parse(completion.choices[0].message.content ?? '');
+
+  const schema = zod.object({
+    produtos: zod.array(zod.string()),
   });
+
+  const parsed = schema.safeParse(output);
+  if (!parsed.success) throw new Error('A resposta foi recebida em um formato inválido.');
+
+  return output;
 
 }

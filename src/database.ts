@@ -30,9 +30,9 @@ export const products: { nome: string, estoque: number }[] = [
 
 // Lista de métodos
 export const getProdutosEmEstoque = () => {
-  return products.filter(e => e.estoque > 0);
+  return products.filter(e => e.estoque > 0).map(e => e.nome);
 }
 
 export const getProdutosEmFalta = () => {
-  return products.filter(e => e.estoque === 0);
+  return products.filter(e => e.estoque === 0).map(e => e.nome);
 }
