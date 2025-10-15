@@ -1,17 +1,14 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import express from 'express';
 import OpenAI from "openai";
 import { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources';
+
 import zod from 'zod';
 import { getProdutosEmEstoque, getProdutosEmFalta } from './database';
 
 
 // INICIALIZAÇÕES E CONFIGURAÇÕES
-const app = express();
-app.use(express.json());
-
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
